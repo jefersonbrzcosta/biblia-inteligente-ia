@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  db:
+    image: ankane/pgvector:latest  # Ensure we use the pgvector-enabled PostgreSQL
+    container_name: bible_ai_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bible_ai_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/migrations:/docker-entrypoint-initdb.d 
+volumes:
+  postgres_data:
