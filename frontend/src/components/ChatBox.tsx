@@ -3,6 +3,7 @@ import { fetchAnswer } from "../services/api";
 import { TextField, Button, Box, Typography } from "@mui/material";
 import MessageBubble from "./MessageBubble";
 import Loader from "./Loader";
+import "./Chatbox.css";
 
 const ChatBox = () => {
   const [question, setQuestion] = useState("");
@@ -25,45 +26,91 @@ const ChatBox = () => {
   return (
     <Box
       sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        alignItems: "center",
+        height: "90vh",
         width: "100%",
         maxWidth: "600px",
         margin: "auto",
-        padding: 2,
-        borderRadius: "8px",
-        backgroundColor: "#f9f9f9",
+        padding: 3,
+        backgroundColor: "#121212",
+        color: "#ffffff",
       }}
     >
+      {/* Title */}
       <Typography variant="h4" gutterBottom align="center">
-        Bible AI Chat
+        Está na Bíblia?
       </Typography>
+
+      {/* Bible Image */}
+      <img src="/bible-glow.png" alt="Bible" className="bible-image" />
+
+      {/* Chat Messages */}
       <Box
         sx={{
-          maxHeight: "400px",
+          flexGrow: 1,
+          width: "100%",
+          maxHeight: "calc(100vh - 250px)",
           overflowY: "auto",
           padding: 2,
           borderRadius: "8px",
-          backgroundColor: "#fff",
+          backgroundColor: "#1e1e1e",
+          color: "#fff",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: messages.length === 0 ? "center" : "flex-start", // Center if empty
         }}
       >
-        {messages.map((msg, index) => (
-          <MessageBubble key={index} role={msg.role} content={msg.content} />
-        ))}
+        {messages.length === 0 ? (
+          <Typography variant="h6" sx={{ color: "#666" }}>
+            Sem mensagens
+          </Typography>
+        ) : (
+          messages.map((msg, index) => (
+            <MessageBubble key={index} role={msg.role} content={msg.content} />
+          ))
+        )}
         {loading && <Loader />}
       </Box>
+
+      {/* Input Field */}
       <TextField
         fullWidth
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         label="Pergunte sobre a Bíblia..."
         variant="outlined"
-        sx={{ mt: 2 }}
+        sx={{
+          mt: 2,
+          backgroundColor: "#2c2c2c",
+          color: "#ffffff",
+          borderRadius: "4px",
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "#666" },
+            "&:hover fieldset": { borderColor: "#888" },
+            "&.Mui-focused fieldset": { borderColor: "#bbb" },
+            "& input": { color: "#ffffff" },
+          },
+          "& .MuiInputLabel-root": {
+            color: "#bbb",
+          },
+        }}
+        onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
       />
+
+      {/* Send Button */}
       <Button
         fullWidth
         onClick={handleSubmit}
         variant="contained"
-        color="primary"
-        sx={{ mt: 2 }}
+        sx={{
+          mt: 2,
+          backgroundColor: "#ffcc00",
+          color: "#121212",
+          "&:hover": { backgroundColor: "#e6b800" },
+        }}
       >
         Enviar
       </Button>

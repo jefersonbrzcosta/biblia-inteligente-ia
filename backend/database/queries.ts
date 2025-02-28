@@ -49,7 +49,7 @@ export const findSimilarQuestion = async (embedding: number[]) => {
   }
 
   // Define similarity threshold (lower is better)
-  const SIMILARITY_THRESHOLD = 0.2;
+  const SIMILARITY_THRESHOLD = 0.4;
   console.log("similarity: ", rows[0]?.similarity);
 
   return rows.length > 0 && rows[0]?.similarity < SIMILARITY_THRESHOLD
