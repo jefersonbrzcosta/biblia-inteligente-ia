@@ -72,12 +72,16 @@ const extractBibleReferences = (text: string): string[] => {
     "Apocalipse",
   ];
 
+  // Melhor regex para capturar referências em frases mais naturais
   const regex = new RegExp(
-    `\\b(${bibleBooks.join("|")})\\s+\\d{1,3}:\\d{1,3}\\b`,
+    `(?:\\b(?:em|no|de)\\s)?(${bibleBooks.join(
+      "|"
+    )})[\\s\\.,]*\\d+:\\d+(-\\d+)?`,
     "gi"
   );
-  const matches = text.match(regex);
-  return matches ? matches.map((ref) => ref.trim()) : [];
+
+  const matches = text.match(regex) || [];
+  return matches.map((match) => match.trim());
 };
 
 export default extractBibleReferences;

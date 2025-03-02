@@ -2,7 +2,7 @@ import { Router } from "express";
 import axios from "axios";
 import {
   getEmbedding,
-  findSimilarQuestion,
+  findBestLocalMatch,
   storeQuestion,
 } from "../database/queries";
 import extractBibleReferences from "../utils/extractBibleReferences";
@@ -20,7 +20,7 @@ router.post("/", async (req, res) => {
     const embedding = await getEmbedding(question);
 
     // Step 2: Search for a similar question in the local database
-    const existing = await findSimilarQuestion(embedding);
+    const existing = await findBestLocalMatch(embedding);
     if (existing) {
       console.log("✅ Found similar question in database, skipping GPT call.");
       return res.json({
