@@ -5,7 +5,7 @@ import {
   findSimilarQuestion,
   storeQuestion,
 } from "../database/queries";
-
+import extractBibleReferences from "../utils/extractBibleReferences";
 const router = Router();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -21,10 +21,12 @@ router.post("/", async (req, res) => {
 
     // Step 2: Search for a similar question in the local database
     const existing = await findSimilarQuestion(embedding);
-
     if (existing) {
       console.log("✅ Found similar question in database, skipping GPT call.");
-      return res.json({ answer: existing.answer });
+      return res.json({
+        answer: existing.answer,
+        bible_reference: existing.bible_reference || "Sem contexto",
+      });
     }
 
     // Step 3: Call GPT only if no similar answer is found
@@ -37,12 +39,12 @@ router.post("/", async (req, res) => {
           {
             role: "system",
             content:
-              "Você é um especialista em Bíblia e em teologia e sempre responde em Português do Brasil.",
+              "Você é um especialista em Bíblia e sempre responde em Português do Brasil. Sempre forneça as referências bíblicas exatas no formato: Livro X, Capítulo Y, Versículo Z.",
           },
           { role: "user", content: question },
         ],
         temperature: 0.7,
-        max_tokens: 200,
+        max_tokens: 300,
       },
       {
         headers: {
@@ -54,10 +56,19 @@ router.post("/", async (req, res) => {
 
     const answer = response.data.choices[0].message.content;
 
+    // Extract Bible references from the response
+    const bibleReferences = extractBibleReferences(answer);
+    const formattedBibleReference =
+      bibleReferences.length > 0 ? bibleReferences.join("; ") : "Sem contexto";
+
     // Step 4: Store the new question, answer, and AI embedding
-    await storeQuestion(question, answer, embedding);
+    await storeQuestion(question, answer, embedding, formattedBibleReference);
     console.log("🤖 DONE");
-    res.json({ answer });
+
+    res.json({
+      answer,
+      bible_reference: formattedBibleReference,
+    });
   } catch (error) {
     console.error("❌ Error processing request:", error);
     res.status(500).json({ error: "Failed to process request" });

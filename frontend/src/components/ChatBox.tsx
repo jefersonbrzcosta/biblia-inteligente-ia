@@ -7,9 +7,14 @@ import "./Chatbox.css";
 
 const ChatBox = () => {
   const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>(
-    []
-  );
+  const [messages, setMessages] = useState<
+    {
+      role: string;
+      content: string;
+      bibleReference?: string;
+      bibleText?: string;
+    }[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -18,7 +23,17 @@ const ChatBox = () => {
     setMessages((prev) => [...prev, { role: "user", content: question }]);
 
     const response = await fetchAnswer(question);
-    setMessages((prev) => [...prev, { role: "ai", content: response.answer }]);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "ai",
+        content: response.answer,
+        bibleReference: response.bible_reference || "Sem contexto",
+        bibleText: response.bible_text || "",
+      },
+    ]);
+
     setLoading(false);
     setQuestion("");
   };
@@ -69,7 +84,13 @@ const ChatBox = () => {
           </Typography>
         ) : (
           messages.map((msg, index) => (
-            <MessageBubble key={index} role={msg.role} content={msg.content} />
+            <MessageBubble
+              key={index}
+              role={msg.role}
+              content={msg.content}
+              bibleReference={msg.bibleReference}
+              bibleText={msg.bibleText}
+            />
           ))
         )}
         {loading && <Loader />}

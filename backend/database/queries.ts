@@ -3,18 +3,21 @@ import pool from "./db";
 export const storeQuestion = async (
   question: string,
   answer: string,
-  embedding: number[]
+  embedding: number[],
+  bibleReference: string // ✅ New field
 ) => {
-  const embeddingArray = Array.from(embedding); // ✅ Convert Float32Array to plain array
-  const formattedEmbedding = `[${embeddingArray.join(",")}]`; // ✅ Ensure correct PostgreSQL vector format
+  const embeddingArray = Array.from(embedding);
+  const formattedEmbedding = `[${embeddingArray.join(",")}]`;
 
   try {
     await pool.query(
-      "INSERT INTO questions (question, answer, embedding, created_at) VALUES ($1, $2, $3::vector(384), NOW())",
-      [question, answer, formattedEmbedding] // ✅ Pass correctly formatted embedding
+      `INSERT INTO questions (question, answer, embedding, bible_reference, created_at)
+       VALUES ($1, $2, $3::vector(384), $4, NOW())`,
+      [question, answer, formattedEmbedding, bibleReference] // ✅ Matches the DB schema
     );
+    console.log("✅ Question stored successfully with Bible reference!");
   } catch (error) {
-    console.error("Error storing question:", error);
+    console.error("❌ Error storing question:", error);
   }
 };
 
@@ -32,28 +35,28 @@ export const getRecentQuestions = async (limit: number = 10) => {
 };
 
 export const findSimilarQuestion = async (embedding: number[]) => {
-  const formattedEmbedding = embedding.join(",");
+  const embeddingArray = Array.from(embedding);
+  const formattedEmbedding = `[${embeddingArray.join(",")}]`;
 
   const query = `
-        SELECT question, answer, embedding <=> $1::vector(384) AS similarity
+        SELECT question, answer, bible_reference, bible_text, embedding <=> $1 AS similarity
         FROM questions
         ORDER BY similarity ASC
         LIMIT 1;
     `;
 
-  const { rows } = await pool.query(query, [`[${formattedEmbedding}]`]);
-
-  if (rows.length === 0) {
-    console.warn("⚠ No similar question found in the database.");
-    return null;
-  }
+  const { rows } = await pool.query(query, [formattedEmbedding]);
 
   // Define similarity threshold (lower is better)
   const SIMILARITY_THRESHOLD = 0.4;
-  console.log("similarity: ", rows[0]?.similarity);
+  console.log("Similarity: ", rows[0]?.similarity);
 
-  return rows.length > 0 && rows[0]?.similarity < SIMILARITY_THRESHOLD
-    ? rows[0]
+  return rows.length > 0 && rows[0].similarity < SIMILARITY_THRESHOLD
+    ? {
+        answer: rows[0].answer,
+        bible_reference: rows[0].bible_reference || "Sem contexto",
+        bible_text: rows[0].bible_text || "",
+      }
     : null;
 };
 
